@@ -103,7 +103,9 @@ func main() {
 		err = binary.Read(
 			bytes.NewBuffer(record.RawSample),
 			binary.LittleEndian,
-			&event)
+			&event,
+		)
+
 		if err != nil {
 			log.Printf("failed to interpret binary data from raw sample")
 			continue

@@ -1,6 +1,6 @@
 GO := go
 USERTRACE_SRC := $(abspath ./cmd/usertrace/*.go)
-BPF_SRC := $(abspath ./pkg/bpf/uprobe.bpf.c)
+BPF_SRC := $(abspath ./bpf/use_vm.bpf.c)
 SAMPLE_SRC := $(abspath ./cmd/sample_program/main.go)
 OUTPUT := $(abspath ./dist)
 
