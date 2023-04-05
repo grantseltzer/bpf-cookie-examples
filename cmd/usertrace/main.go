@@ -28,6 +28,7 @@ import (
 */
 func main() {
 
+	// Take executable path and symbol name as flag arguments
 	executable_path := flag.String("executable", "", "path to executable to instrument")
 	symbol_name := flag.String("symbol", "", "symbol to instrument in executable")
 	flag.Parse()
@@ -48,29 +49,26 @@ func main() {
 
 	// Load pre-compiled programs and maps into the kernel.
 	objs := bpfObjects{}
-	err = loadBpfObjects(&objs, &ebpf.CollectionOptions{
-		Programs: ebpf.ProgramOptions{
-			LogDisabled: false,
-			LogSize:     ebpf.DefaultVerifierLogSize * 15,
-			LogLevel:    ebpf.LogLevelInstruction,
-		},
-	})
+	err = loadBpfObjects(&objs, nil)
 	if err != nil {
 		var ve *ebpf.VerifierError
 		if errors.As(err, &ve) {
-			fmt.Printf("%+v\n", ve)
+			log.Fatalf("Verifier Issue!\n")
 		}
+		log.Fatalf("error loading: %s\n", err)
 	}
 	defer objs.Close()
 
+	// Create the set of instructions that the VM will execute, put it in a hash map
 	cookie := create_dummy_cookie()
-	encoded_cookie := encode_cookie(cookie)
-	index := 1
-	err = objs.bpfMaps.CookieMap.Update(index, encoded_cookie, ebpf.UpdateNoExist)
+	var index uint8 = 1
+	err = objs.CookieMap.Update(index, cookie, ebpf.UpdateNoExist)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("can't update cookie map: ", err)
 	}
 
+	// Set the index of the instructions in the hash map as the cookie passed
+	// to the uprobe
 	l, err := executable.Uprobe(*symbol_name, objs.UprobeInstrument, &link.UprobeOptions{
 		Cookie: uint64(index),
 	})

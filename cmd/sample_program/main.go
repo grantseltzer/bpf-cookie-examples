@@ -181,7 +181,7 @@ func main() {
 		test_single_uint8(1)
 		test_single_uint16(1)
 		test_single_uint32(1)
-		test_single_uint64(1)
+		test_single_uint64(420)
 		test_single_float32(1.1)
 		test_single_float64(1.1)
 		test_combined_byte(2, 3, 3.0)

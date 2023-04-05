@@ -1,4 +1,4 @@
-# 16-bit bpf
+# BPF Stack VM (BSV)
 
 Solves the problem of in-kernel filtering (instead of taking lots of data back up to user space)
 
@@ -22,7 +22,7 @@ Stack based vm, needs instructions for:
 
 ## Example
 
-Tracing function `test_single_uint64(x uint64)`. uint64 is loaded in register 0. No returns, just have to retrieve this one value 
+Tracing function `test_combined_uint64(x uint64)`. uint64 is loaded in register 0. No returns, just have to retrieve this one value 
 
 Instructions:
 ```
