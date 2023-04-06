@@ -27,11 +27,10 @@ int uprobe__instrument(struct pt_regs *ctx)
     }
 
     instruction_t current_instruction;
-    __u8 value;
 
     int err;
-    int stack_top = -1;
-    __u8 stack[STACK_SIZE] = {0};
+    __int8_t stack_top = -1;
+    __u16 stack[STACK_SIZE] = {0};
     int output_counter = 0;
 
     int i;
@@ -39,10 +38,13 @@ int uprobe__instrument(struct pt_regs *ctx)
 
         current_instruction = instructions->ins[i];
         u8 op = current_instruction.op;
+
         if (op == OPCODE_NOP) {
             continue;
-        } 
+        }
+
         else if (op == OPCODE_READ_REGISTER) {
+            __u16 value;
             if (current_instruction.arg1 > 31) {
                 bpf_ringbuf_discard(e, 0);
                 return 0;
@@ -55,8 +57,27 @@ int uprobe__instrument(struct pt_regs *ctx)
                 return 0;
             }
             continue;
-        } 
+        }
+
+        else if (op == OPCODE_READ_STACK) {
+            // __u16 value;
+            // void* stackAddr = (void*)ctx->sp;
+            
+            // value = bpf_probe_read(&value, current_instruction.arg2, stackAddr+current_instruction.arg1);
+            // err = push(&value, stack, &stack_top);
+            // if (err != 0) {
+            //     bpf_ringbuf_discard(e, 0);
+            //     return 0;
+            // }
+            // continue;
+        }
+
+        // else if (op == OPCODE_DEREFERENCE) {
+        //     // TODO
+        // }
+
         else if (op == OPCODE_APPEND_TO_ARRAY) {
+            __u32 value;
             value = pop(stack, &stack_top);
             if (output_counter < MAX_OUTPUT_COUNT) {
                 e->array[output_counter] = value;

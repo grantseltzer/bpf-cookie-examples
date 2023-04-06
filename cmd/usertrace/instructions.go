@@ -19,10 +19,10 @@ var opts_to_num_args = map[opcode]uint8{
 }
 
 type instruction struct {
-	op   opcode
-	_    [3]uint8 // padding
-	arg1 uint32
-	arg2 uint32
+	op opcode
+	// _    [1]uint8 // padding
+	arg2 uint8
+	arg1 uint16
 }
 
 type instruction_set struct {

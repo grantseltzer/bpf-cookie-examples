@@ -1,28 +1,28 @@
 /*
     Implementation of the vm stack with an array
 */
-static __always_inline int push(__u8* value, __u8 stack[STACK_SIZE], int* top) {
+static __always_inline int push(__u16* value, __u16 stack[STACK_SIZE], __int8_t* top) {
 
-    // Uninitialized stack
     if (*top == -1) {
+        // Uninitialized stack
         stack[0] = *value;
         *top = 0;
     } else if (*top == STACK_SIZE-1) {
-        // stack is full
-        bpf_printk("stack is full, can't push");
+        // Stack is full
         return 1;
     } else {
+        // Push onto stack
         stack[(*top) + 1] = *value;
         (*top) += 1;
     }
     return 0;
 }
 
-static __always_inline __u8 pop(__u8 stack[STACK_SIZE], int* top) {
-    __u32 popValue = 0;
+static __always_inline __u8 pop(__u16 stack[STACK_SIZE], __int8_t* top) {
+    __u16 popValue = 0;
     
     if((*top) == -1) {
-        bpf_printk("stack is empty, can't pop");
+        // Empty stack
         return 0;
     } else {
         popValue = stack[(*top)];

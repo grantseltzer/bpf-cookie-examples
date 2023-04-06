@@ -49,11 +49,11 @@ func main() {
 
 	// Load pre-compiled programs and maps into the kernel.
 	objs := bpfObjects{}
-	err = loadBpfObjects(&objs, nil)
+	err = loadBpfObjects(&objs, &ebpf.CollectionOptions{})
 	if err != nil {
 		var ve *ebpf.VerifierError
 		if errors.As(err, &ve) {
-			log.Fatalf("Verifier Issue!\n")
+			log.Fatalf("Verifier Issue\n%s\n", ve)
 		}
 		log.Fatalf("error loading: %s\n", err)
 	}
