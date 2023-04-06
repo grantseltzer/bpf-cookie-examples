@@ -1,6 +1,8 @@
 # BPF Stack VM (BSV)
 
-Solves the problem of in-kernel filtering (instead of taking lots of data back up to user space)
+Attempts to solve the problem of in-kernel filtering (instead of taking lots of data back up to user space)
+
+HOWEVER, because of the bpf instruction limit, this doesn't work that well, can only get around 10 instructions before either hitting the instruction limit or stack size.
 
 Stack based vm, needs instructions for:
 - reading from specific registers
