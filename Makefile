@@ -1,17 +1,15 @@
 GO := go
-USERTRACE_SRC := $(abspath ./cmd/usertrace/*.go)
-BPF_SRC := $(abspath ./bpf/use_vm.bpf.c)
-SAMPLE_SRC := $(abspath ./cmd/sample_program/main.go)
+
+EVENT_ID_MAIN_SRC := $(abspath ./cmd/event_id/event_id.go)
+EVENT_ID_BPF_SRC := $(abspath ./cmd/event_id/event_id.c)
+
 OUTPUT := $(abspath ./dist)
 
-all: $(OUTPUT)/usertrace $(OUTPUT)/sample
+all: $(OUTPUT)/event_id
 
-$(OUTPUT)/usertrace: $(BPF_SRC) $(USERTRACE_SRC) $(OUTPUT)
-	$(GO) generate $(USERTRACE_SRC)
-	$(GO) build -o $@ $(USERTRACE_SRC)
-
-$(OUTPUT)/sample: $(SAMPLE_SRC)
-	$(GO) build -o $@ $(SAMPLE_SRC)
+$(OUTPUT)/event_id: $(EVENT_ID_BPF_SRC) $(EVENT_ID_MAIN_SRC) $(OUTPUT)
+	$(GO) generate $(EVENT_ID_MAIN_SRC)
+	$(GO) build -o $@ ./cmd/event_id/*.go
 
 .PHONY: clean
 clean:

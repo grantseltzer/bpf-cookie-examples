@@ -1,0 +1,4 @@
+- Thresholds of values, when to send them over a ringbuffer (i.e. only send the event of uid > 0)
+- Event context ID to give context for when events are shared on a single ringbuffer (i.e. name of the function)
+- Key in a map with arbitrary data type
+  - Implementing a vm example
