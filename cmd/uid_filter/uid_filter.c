@@ -19,7 +19,7 @@ SEC("kprobe/do_unlinkat")
 int kprobe__do_unlinkat(struct pt_regs *ctx)
 {
     __u64 target_uid = bpf_get_attach_cookie(ctx);
-    __u64 uid = bpf_get_current_uid_gid();
+    __u32 uid = (__u32)bpf_get_current_uid_gid();
 
     if (target_uid != uid) {
         return 0;
