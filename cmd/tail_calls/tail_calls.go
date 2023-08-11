@@ -9,8 +9,6 @@ import (
 	"github.com/cilium/ebpf/rlimit"
 )
 
-// USAGE: ./tail_calls <binary_path> <symbol_name>
-
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags "-O2 -g -Wall -Werror" -target arm64 -type event bpf ./tail_calls.c -- -I../../bpf/helpers
 
 func main() {
@@ -36,6 +34,8 @@ func main() {
 		log.Fatalf("error loading: %s\n", err)
 	}
 	defer objs.Close()
+
+	//Todo: Attach `uprobe__instrument` to an executable's function, specified as os.Args
 
 	time.Sleep(time.Minute)
 }
