@@ -28,7 +28,7 @@ int uprobe__walk_stack_manually(struct pt_regs *ctx)
     e->event_id = bpf_get_attach_cookie(ctx);
 
     __u64 bp = ctx->regs[29];
-    bpf_probe_read(&bp, sizeof(__u64), (void*)bp); // dereference bp to get current stackframe
+    bpf_probe_read(&bp, sizeof(__u64), (void*)bp); // dereference bp to get current stack frame
 
     __u64 ret_addr = ctx->regs[30]; // when bpf prog enters, the return address hasn't yet been written to the stack
 

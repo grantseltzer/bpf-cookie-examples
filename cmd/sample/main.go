@@ -307,13 +307,13 @@ func stack_B() {
 }
 
 //go:noinline
-func stack_C() {
-	print("stacked")
-}
+func stack_C() {}
 
 func main() {
 	for {
+
 		stack_A()
+
 		test_single_byte('a')
 		test_single_rune('a')
 		test_single_string("grant")

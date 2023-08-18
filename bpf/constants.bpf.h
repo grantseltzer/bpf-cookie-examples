@@ -1,5 +1,0 @@
-enum { 
-    STACK_SIZE = 128,
-    MAX_INSTRUCTIONS = 9,
-    MAX_OUTPUT_COUNT = 512
-};

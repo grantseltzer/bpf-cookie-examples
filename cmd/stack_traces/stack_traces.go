@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"debug/elf"
+	"debug/gosym"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -17,39 +18,11 @@ import (
 
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags "-O2 -g -Wall -Werror" -target arm64 -type event bpf ./stack_traces.c -- -I../../bpf/helpers
 
-var syms []elf.Symbol
+var syms *gosym.Table
 
-func resolveSymbolNameFromFPOffset(fpOffset uint64) string {
-
-	var (
-		min     = 0
-		max     = len(syms) - 1
-		halfway = 0
-	)
-
-	for {
-		halfway = (min + max) / 2
-
-		if syms[max].Value <= fpOffset {
-			return syms[max].Name
-		}
-
-		if syms[min].Value == fpOffset || max-min == 1 {
-			return syms[min].Name
-		}
-
-		if syms[halfway].Value == fpOffset {
-			return syms[halfway].Name
-		}
-
-		if fpOffset > syms[halfway].Value {
-			min = halfway
-		}
-
-		if fpOffset < syms[halfway].Value {
-			max = halfway
-		}
-	}
+func resolveSymbolNameFromFPOffset(fpOffset uint64) (string, string, int) {
+	fileName, lineNumber, fn := syms.PCToLine(fpOffset)
+	return fn.Name, fileName, lineNumber
 }
 
 func main() {
@@ -59,7 +32,23 @@ func main() {
 		log.Fatal(err)
 	}
 
-	syms, err = f.Symbols()
+	addr := f.Section(".text").Addr
+
+	lineTableData, err := f.Section(".gopclntab").Data()
+	if err != nil {
+		log.Fatal(err)
+	}
+	lineTable := gosym.NewLineTable(lineTableData, addr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	symtab := f.Section(".gosymtab")
+	symTableData, err := symtab.Data()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	syms, err = gosym.NewTable(symTableData, lineTable)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -139,7 +128,34 @@ func main() {
 
 		fmt.Printf("%s\n", symbolIDToName[event.EventId])
 		for i := range event.ReturnAddrs {
-			fmt.Printf("\t0x%x: %s\n", event.ReturnAddrs[i], resolveSymbolNameFromFPOffset(event.ReturnAddrs[i]))
+			funcName, fileName, lineNum := resolveSymbolNameFromFPOffset(event.ReturnAddrs[i])
+			fmt.Printf("\t0x%x: %s (%s:%d)\n", event.ReturnAddrs[i], funcName, fileName, lineNum)
 		}
 	}
+}
+
+func elfGoSyms(f *elf.File) (*gosym.Table, error) {
+	text := f.Section(".text")
+	symtab := f.Section(".gosymtab")
+	pclntab := f.Section(".gopclntab")
+	if text == nil || symtab == nil || pclntab == nil {
+		return nil, nil
+	}
+
+	symdat, err := symtab.Data()
+	if err != nil {
+		return nil, err
+	}
+	pclndat, err := pclntab.Data()
+	if err != nil {
+		return nil, err
+	}
+
+	pcln := gosym.NewLineTable(pclndat, text.Addr)
+	tab, err := gosym.NewTable(symdat, pcln)
+	if err != nil {
+		return nil, err
+	}
+
+	return tab, nil
 }
