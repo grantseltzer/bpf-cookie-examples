@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"debug/dwarf"
 	"debug/elf"
 	"debug/gosym"
 	"encoding/binary"
@@ -25,9 +26,54 @@ func resolveSymbolNameFromFPOffset(fpOffset uint64) (string, string, int) {
 	return fn.Name, fileName, lineNumber
 }
 
+var inlinedFuncsMap map[uint64][]*dwarf.Entry
+var reader *dwarf.Reader
+
+func dwarfReadInlinedFunctions(binaryPath string) error {
+	f, err := elf.Open(binaryPath)
+	if err != nil {
+		return err
+	}
+
+	d, err := f.DWARF()
+	if err != nil {
+		return err
+	}
+
+	reader = d.Reader()
+
+	inlinedFuncsMap = make(map[uint64][]*dwarf.Entry)
+	reader := d.Reader()
+
+	for {
+		entry, err := reader.Next()
+		if entry == nil {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		if entry.Tag == dwarf.TagInlinedSubroutine {
+			for i := range entry.Field {
+				if entry.Field[i].Attr == dwarf.AttrHighpc {
+					inlinedFuncsMap[entry.Field[i].Val.(uint64)] = append(inlinedFuncsMap[entry.Field[i].Val.(uint64)], entry)
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
 func main() {
 
 	f, err := elf.Open(os.Args[1])
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = dwarfReadInlinedFunctions(os.Args[1])
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -128,34 +174,52 @@ func main() {
 
 		fmt.Printf("%s\n", symbolIDToName[event.EventId])
 		for i := range event.ReturnAddrs {
+			if event.ReturnAddrs[i] == 0 {
+				break
+			}
+
+			entries, ok := inlinedFuncsMap[event.ReturnAddrs[i]]
+			if ok {
+				for _, entry := range entries {
+					printEntry(event.ReturnAddrs[i], entry)
+				}
+			}
+
 			funcName, fileName, lineNum := resolveSymbolNameFromFPOffset(event.ReturnAddrs[i])
 			fmt.Printf("\t0x%x: %s (%s:%d)\n", event.ReturnAddrs[i], funcName, fileName, lineNum)
 		}
 	}
 }
 
-func elfGoSyms(f *elf.File) (*gosym.Table, error) {
-	text := f.Section(".text")
-	symtab := f.Section(".gosymtab")
-	pclntab := f.Section(".gopclntab")
-	if text == nil || symtab == nil || pclntab == nil {
-		return nil, nil
+func printEntry(pc uint64, e *dwarf.Entry) {
+	var (
+		offset dwarf.Offset
+		name   string
+		file   int64
+		line   int64
+	)
+	for i := range e.Field {
+		if e.Field[i].Attr == dwarf.AttrAbstractOrigin {
+			offset = e.Field[i].Val.(dwarf.Offset)
+			reader.Seek(offset)
+			entry, err := reader.Next()
+			if err != nil {
+				panic(err)
+			}
+			for j := range entry.Field {
+				if entry.Field[j].Attr == dwarf.AttrName {
+					name = entry.Field[j].Val.(string)
+				}
+			}
+		}
+		if e.Field[i].Attr == dwarf.AttrCallFile {
+			file = e.Field[i].Val.(int64)
+		}
+		if e.Field[i].Attr == dwarf.AttrCallLine {
+			line = e.Field[i].Val.(int64)
+		}
+
 	}
 
-	symdat, err := symtab.Data()
-	if err != nil {
-		return nil, err
-	}
-	pclndat, err := pclntab.Data()
-	if err != nil {
-		return nil, err
-	}
-
-	pcln := gosym.NewLineTable(pclndat, text.Addr)
-	tab, err := gosym.NewTable(symdat, pcln)
-	if err != nil {
-		return nil, err
-	}
-
-	return tab, nil
+	fmt.Printf("\t0x%x: %s (%d:%d) INLINED\n", pc, name, file, line)
 }

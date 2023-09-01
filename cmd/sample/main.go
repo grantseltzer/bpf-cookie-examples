@@ -312,29 +312,31 @@ func stack_C() {
 }
 
 //go:noinline
-func call_inlined_func_A() {
-	inline_me_please()
+func call_inlined_func_chain() {
+	inline_me_1()
+}
+
+func inline_me_1() {
+	inline_me_2()
+}
+
+func inline_me_2() {
+	inline_me_3()
+}
+
+func inline_me_3() {
+	not_inlined()
 }
 
 //go:noinline
-func call_inlined_func_B() {
-	inline_me_please()
-	inline_me_please()
-	inline_me_please()
-	inline_me_please()
-
-}
-
-func inline_me_please() {
-	print("hello from an inlined function!\n")
+func not_inlined() {
+	print("hello!")
 }
 
 func main() {
 	for {
 
-		stack_A()
-		call_inlined_func_A()
-		call_inlined_func_B()
+		call_inlined_func_chain()
 
 		test_single_byte('a')
 		test_single_rune('a')
