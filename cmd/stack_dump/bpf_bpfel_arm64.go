@@ -12,11 +12,7 @@ import (
 	"github.com/cilium/ebpf"
 )
 
-type bpfEvent struct {
-	EventId      uint64
-	StackContent [50]int8
-	_            [6]byte
-}
+type bpfEvent struct{ StackContent [50]int8 }
 
 // loadBpf returns the embedded CollectionSpec for bpf.
 func loadBpf() (*ebpf.CollectionSpec, error) {
@@ -59,7 +55,7 @@ type bpfSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type bpfProgramSpecs struct {
-	UprobeInstrument *ebpf.ProgramSpec `ebpf:"uprobe_instrument"`
+	UprobeDumpStack *ebpf.ProgramSpec `ebpf:"uprobe__dump_stack"`
 }
 
 // bpfMapSpecs contains maps before they are loaded into the kernel.
@@ -101,12 +97,12 @@ func (m *bpfMaps) Close() error {
 //
 // It can be passed to loadBpfObjects or ebpf.CollectionSpec.LoadAndAssign.
 type bpfPrograms struct {
-	UprobeInstrument *ebpf.Program `ebpf:"uprobe_instrument"`
+	UprobeDumpStack *ebpf.Program `ebpf:"uprobe__dump_stack"`
 }
 
 func (p *bpfPrograms) Close() error {
 	return _BpfClose(
-		p.UprobeInstrument,
+		p.UprobeDumpStack,
 	)
 }
 

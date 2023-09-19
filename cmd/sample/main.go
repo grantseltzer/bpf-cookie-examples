@@ -242,6 +242,15 @@ func test_uint32_array(x [2]uint32) {}
 func test_uint64_array(x [2]uint64) {}
 
 //go:noinline
+func test_byte_slice(x []byte) {}
+
+//go:noinline
+func test_uint64_slice(x []uint64) {}
+
+//go:noinline
+func test_map(m map[int]string) {}
+
+//go:noinline
 func test_struct(x aStruct) {}
 
 //go:noinline
@@ -382,6 +391,20 @@ func main() {
 		test_uint16_array([2]uint16{951, 123})
 		test_uint32_array([2]uint32{5135, 512321})
 		test_uint64_array([2]uint64{412412456, 1234134})
+
+		test_uint64_slice([]uint64{5, 9})
+		test_byte_slice([]byte{1, 2, 3})
+
+		test_map(map[int]string{
+			4: "hello!",
+			5: "aedvasf!",
+			6: "43f43f!",
+			7: "vdsret!",
+			8: "e!",
+			9: "helrqwerqwrwrqwrlo!",
+			1: "helqwq34i39lo!",
+			2: "hellrwqrwo!",
+		})
 
 		n := nStruct{false, 321333, 42}
 		test_nonembedded_struct(n)

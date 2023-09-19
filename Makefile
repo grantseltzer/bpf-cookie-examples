@@ -15,11 +15,14 @@ TAILCALLS_BPF_SRC := $(abspath ./cmd/tail_calls/tail_calls.c)
 STACKTRACE_MAIN_SRC := $(abspath ./cmd/stack_traces/stack_traces.go)
 STACKTRACE_BPF_SRC := $(abspath ./cmd/stack_traces/stack_traces.c)
 
+STACK_DUMP_MAIN_SRC := $(abspath ./cmd/stack_dump/stack_dump.go)
+STACK_DUMP_BPF_SRC := $(abspath ./cmd/stack_dump/stack_dump.c)
+
 SAMPLE_SRC := $(abspath ./cmd/sample/main.go)
 
 OUTPUT := $(abspath ./dist)
 
-all: $(OUTPUT)/sample $(OUTPUT)/event_id $(OUTPUT)/uid_filter $(OUTPUT)/multiple_filter $(OUTPUT)/tail_calls $(OUTPUT)/stack_traces
+all: $(OUTPUT)/sample $(OUTPUT)/event_id $(OUTPUT)/uid_filter $(OUTPUT)/multiple_filter $(OUTPUT)/tail_calls $(OUTPUT)/stack_traces $(OUTPUT)/stack_dump
 
 $(OUTPUT)/sample: $(SAMPLE_SRC)
 	$(GO) build -o $@ ./cmd/sample/main.go
@@ -43,6 +46,11 @@ $(OUTPUT)/tail_calls: $(TAILCALLS_BPF_SRC) $(TAILCALLS_MAIN_SRC) $(OUTPUT)
 $(OUTPUT)/stack_traces: $(STACKTRACE_BPF_SRC) $(STACKTRACE_MAIN_SRC) $(OUTPUT)
 	$(GO) generate $(STACKTRACE_MAIN_SRC)
 	$(GO) build -o $@ ./cmd/stack_traces/*.go
+
+
+$(OUTPUT)/stack_dump: $(STACK_DUMP_BPF_SRC) $(STACK_DUMP_MAIN_SRC) $(OUTPUT)
+	$(GO) generate $(STACK_DUMP_MAIN_SRC)
+	$(GO) build -o $@ ./cmd/stack_dump/*.go
 
 .PHONY: clean
 clean:
