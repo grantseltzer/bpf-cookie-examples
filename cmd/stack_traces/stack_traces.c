@@ -16,7 +16,6 @@ struct event {
 };
 const struct event *unused __attribute__((unused));
 
-
 SEC("uprobe/walk_stack_manually")
 int uprobe__walk_stack_manually(struct pt_regs *ctx)
 {

@@ -40,8 +40,6 @@ func dwarfReadInlinedFunctions(binaryPath string) error {
 		return err
 	}
 
-	reader = d.Reader()
-
 	inlinedFuncsMap = make(map[uint64][]*dwarf.Entry)
 	reader := d.Reader()
 
