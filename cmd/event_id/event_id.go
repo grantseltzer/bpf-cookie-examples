@@ -40,24 +40,31 @@ func main() {
 	}
 	defer objs.Close()
 
+	var zeroArray [50]uint8
+	var index uint32
+	err = objs.Zeroval.Update(index, zeroArray, 0)
+	if err != nil {
+		log.Fatalf("couldn't create zero value array map: %s\n", err)
+	}
+
 	symbolIDToName := map[uint64]string{
-		1: "main.foobar",
-		2: "main.bazbuz",
+		1: "main.test_single_int",
+		2: "main.test_single_uint",
 	}
 
 	symbolNamesToID := map[string]uint64{
-		"main.foobar": 1,
-		"main.bazbuz": 2,
+		"main.test_single_int":  1,
+		"main.test_single_uint": 2,
 	}
 
 	for symName, symID := range symbolNamesToID {
 		l, err := executable.Uprobe(symName, objs.UprobeInstrument, &link.UprobeOptions{
 			Cookie: symID,
 		})
-		defer l.Close()
 		if err != nil {
 			log.Fatal(err)
 		}
+		defer l.Close()
 	}
 
 	// Open the bpf ringbuffer
@@ -92,6 +99,6 @@ func main() {
 			continue
 		}
 
-		fmt.Printf("The symbol %s had the first 50 bytes: %w\n", symbolIDToName[event.EventId], event.StackContent)
+		fmt.Printf("The symbol %s had the first 50 bytes: %+v\n", symbolIDToName[event.EventId], event.StackContent)
 	}
 }

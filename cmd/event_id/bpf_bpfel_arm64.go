@@ -66,7 +66,8 @@ type bpfProgramSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type bpfMapSpecs struct {
-	Events *ebpf.MapSpec `ebpf:"events"`
+	Events  *ebpf.MapSpec `ebpf:"events"`
+	Zeroval *ebpf.MapSpec `ebpf:"zeroval"`
 }
 
 // bpfObjects contains all objects after they have been loaded into the kernel.
@@ -88,12 +89,14 @@ func (o *bpfObjects) Close() error {
 //
 // It can be passed to loadBpfObjects or ebpf.CollectionSpec.LoadAndAssign.
 type bpfMaps struct {
-	Events *ebpf.Map `ebpf:"events"`
+	Events  *ebpf.Map `ebpf:"events"`
+	Zeroval *ebpf.Map `ebpf:"zeroval"`
 }
 
 func (m *bpfMaps) Close() error {
 	return _BpfClose(
 		m.Events,
+		m.Zeroval,
 	)
 }
 

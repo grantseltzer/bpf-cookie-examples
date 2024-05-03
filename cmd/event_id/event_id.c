@@ -10,6 +10,13 @@ struct bpf_map_def SEC("maps") events = {
     .max_entries = 1<<24,
 };
 
+struct bpf_map_def SEC("maps") zeroval = {
+    .type        = BPF_MAP_TYPE_ARRAY,
+    .max_entries = 1,
+	.key_size    = sizeof(__u32),
+	.value_size  = sizeof(char[50]),
+};
+
 struct event {
     __u64 event_id;
     char stack_content[50];
@@ -27,9 +34,17 @@ int uprobe_instrument(struct pt_regs *ctx)
         return 0;
     }
 
-    e->event_id = event_id;
+    char* zero_string;
+    __u32 key = 0;
+    zero_string = bpf_map_lookup_elem(&zeroval, &key);
+    if (!zero_string) {
+        bpf_ringbuf_discard(e, 0);
+        return 0;
+    }
 
-    bpf_probe_read(&e->stack_content, 50, &ctx->sp);
+    bpf_probe_read(&e->stack_content, sizeof(e->stack_content), zero_string);
+
+    e->event_id = event_id;
 
     bpf_ringbuf_submit(e, 0);
     return 0;
